@@ -125,7 +125,7 @@ class _UserListScreenState extends State<UserListScreen>
                   'User Directory',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87, // Always use light theme text color
+                    color: Theme.of(context).colorScheme.onSurface, // Dynamic text color
                   ),
                 ),
               ),
@@ -143,14 +143,16 @@ class _UserListScreenState extends State<UserListScreen>
               color: Colors.transparent,
               child: TextField(
                 controller: _searchController,
-                style: const TextStyle(
-                  color: Colors.black87,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, // Dynamic text color
                 ), // Light theme text color
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Theme.of(context).colorScheme.surface,
                   hintText: 'Search users...',
-                  hintStyle: const TextStyle(color: Colors.black54),
+                  hintStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), // Dynamic hint text color
+                  ),
                   prefixIcon: const Icon(Icons.search, color: Colors.black54),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
@@ -179,7 +181,7 @@ class _UserListScreenState extends State<UserListScreen>
         child: Text(
           error,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Colors.red, // Error in light theme
+            color: Theme.of(context).colorScheme.error, // Dynamic error text color
           ),
         ),
       );
@@ -190,7 +192,7 @@ class _UserListScreenState extends State<UserListScreen>
         child: Text(
           'No users found',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Colors.black87, // Light theme text color
+            color: Theme.of(context).colorScheme.onSurface, // Dynamic text color
           ),
         ),
       );
@@ -235,7 +237,7 @@ class _UserListScreenState extends State<UserListScreen>
                       user.name,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87, // Light theme text color
+                        color: Theme.of(context).colorScheme.onSurface, // Dynamic text color
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -244,7 +246,7 @@ class _UserListScreenState extends State<UserListScreen>
                     Text(
                       user.email,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.black87, // Light theme text color
+                        color: Theme.of(context).colorScheme.onSurface, // Dynamic text color
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -257,7 +259,7 @@ class _UserListScreenState extends State<UserListScreen>
               IconButton(
                 icon: Icon(
                   Icons.chevron_right,
-                  color: Colors.black87, // Light theme icon color
+                  color: Theme.of(context).colorScheme.onSurface, // Dynamic icon color
                 ),
                 onPressed: () => _navigateToUserDetail(user),
               ),
