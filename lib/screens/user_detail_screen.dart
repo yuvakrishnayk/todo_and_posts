@@ -27,9 +27,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
 
   Future<void> _fetchUserData() async {
     if (widget.user.id == null || widget.user.id.toString().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid user ID')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Invalid user ID')));
       return;
     }
 
@@ -52,32 +52,20 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           _isLoading = false;
         });
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to fetch data')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Failed to fetch data')));
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading data: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading data: $e')));
     }
   }
 
-  void _addTodo() {
-    setState(() {
-      _todos.add({'title': 'Todo Item ${_todos.length}', 'completed': false});
-    });
-  }
-
-  void _toggleTodo(int index, bool? value) {
-    setState(() {
-      _todos[index]['completed'] = value ?? false;
-    });
-  }
-
   void _editTodoTitle(int index) async {
-    final controller = TextEditingController(text: _todos[index]['title']);
+    final controller = TextEditingController(text: _todos[index]['todo']);
     final result = await showDialog<String>(
       context: context,
       builder:
@@ -86,7 +74,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             content: TextField(
               controller: controller,
               autofocus: true,
-              decoration: const InputDecoration(labelText: 'Todo Title'),
+              decoration: const InputDecoration(labelText: 'Todo Description'),
             ),
             actions: [
               TextButton(
@@ -102,9 +90,21 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     );
     if (result != null && result.trim().isNotEmpty) {
       setState(() {
-        _todos[index]['title'] = result.trim();
+        _todos[index]['todo'] = result.trim();
       });
     }
+  }
+
+  void _addTodo() {
+    setState(() {
+      _todos.add({'todo': 'New Todo', 'completed': false});
+    });
+  }
+
+  void _toggleTodo(int index, bool? value) {
+    setState(() {
+      _todos[index]['completed'] = value ?? false;
+    });
   }
 
   void _navigateToUserDetails(BuildContext context) {
@@ -185,11 +185,98 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                         itemCount: _posts.length,
                         itemBuilder: (context, index) {
                           final post = _posts[index];
+                          final tags = List<String>.from(post['tags'] ?? []);
+                          final reactions =
+                              post['reactions'] as Map<String, dynamic>? ?? {};
+                          final views = post['views'] ?? 0;
+
                           return Card(
                             margin: const EdgeInsets.all(8),
-                            child: ListTile(
-                              title: Text(post['title'] ?? 'No Title'),
-                              subtitle: Text(post['body'] ?? 'No Content'),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    post['title'] ?? 'No Title',
+                                    style:
+                                        Theme.of(context).textTheme.titleLarge,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    post['body'] ?? 'No Content',
+                                    style:
+                                        Theme.of(context).textTheme.bodyMedium,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  // Tags
+                                  if (tags.isNotEmpty)
+                                    Wrap(
+                                      spacing: 4,
+                                      children:
+                                          tags
+                                              .map(
+                                                (tag) => Chip(
+                                                  label: Text(tag),
+                                                  backgroundColor:
+                                                      Theme.of(context)
+                                                          .colorScheme
+                                                          .secondaryContainer,
+                                                  labelStyle: TextStyle(
+                                                    color:
+                                                        Theme.of(context)
+                                                            .colorScheme
+                                                            .onSecondaryContainer,
+                                                  ),
+                                                ),
+                                              )
+                                              .toList(),
+                                    ),
+                                  const SizedBox(height: 8),
+                                  // Reactions and Views
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.thumb_up,
+                                            color:
+                                                Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text('${reactions['likes'] ?? 0}'),
+                                          const SizedBox(width: 16),
+                                          Icon(
+                                            Icons.thumb_down,
+                                            color:
+                                                Theme.of(
+                                                  context,
+                                                ).colorScheme.error,
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text('${reactions['dislikes'] ?? 0}'),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.remove_red_eye,
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text('$views views'),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         },
@@ -205,21 +292,60 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                               itemCount: _todos.length,
                               itemBuilder: (context, index) {
                                 final todo = _todos[index];
-                                return CheckboxListTile(
-                                  title: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(todo['title'] ?? 'No Title'),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.edit, size: 20),
-                                        onPressed: () => _editTodoTitle(index),
-                                      ),
-                                    ],
+                                return Card(
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
                                   ),
-                                  value: todo['completed'] ?? false,
-                                  onChanged: (value) =>
-                                      _toggleTodo(index, value),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                todo['todo'] ?? 'No Title',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleMedium
+                                                    ?.copyWith(
+                                                      decoration:
+                                                          todo['completed'] ==
+                                                                  true
+                                                              ? TextDecoration
+                                                                  .lineThrough
+                                                              : null,
+                                                    ),
+                                              ),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.edit,
+                                                size: 20,
+                                              ),
+                                              onPressed:
+                                                  () => _editTodoTitle(index),
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            Switch(
+                                              value: todo['completed'] ?? false,
+                                              onChanged:
+                                                  (value) =>
+                                                      _toggleTodo(index, value),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 );
                               },
                             ),
