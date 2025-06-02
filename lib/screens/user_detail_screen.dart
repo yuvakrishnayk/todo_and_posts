@@ -2,8 +2,6 @@
 import 'package:assignment/screens/create_post_screen.dart';
 import 'package:assignment/screens/full_user_detail_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import '../models/user.dart';
 import '../services/api_service.dart';
 
@@ -28,7 +26,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   }
 
   Future<void> _fetchUserData() async {
-    if (widget.user.id == null || widget.user.id.toString().isEmpty) {
+    if (widget.user.id.toString().isEmpty) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Invalid user ID')));

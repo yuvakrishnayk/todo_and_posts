@@ -1,7 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import '../models/user.dart';
 import '../widgets/orbital_user_avatar.dart';
 import '../screens/user_detail_screen.dart'; // Add this import

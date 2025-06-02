@@ -37,6 +37,7 @@ dependencies:
   infinite_scroll_pagination: ^5.0.0
   http: ^1.1.0
   shared_preferences: ^2.5.3
+  flutter_bloc: ^9.1.1
 
 dev_dependencies:
   flutter_test:
