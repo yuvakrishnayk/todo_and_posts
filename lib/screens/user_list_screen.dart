@@ -5,6 +5,7 @@ import 'dart:convert';
 import '../models/user.dart';
 import '../widgets/orbital_user_avatar.dart';
 import '../screens/user_detail_screen.dart'; // Add this import
+import '../services/api_service.dart';
 
 class UserListScreen extends StatefulWidget {
   final VoidCallback onToggleTheme;
@@ -17,6 +18,7 @@ class UserListScreen extends StatefulWidget {
 
 class _UserListScreenState extends State<UserListScreen>
     with SingleTickerProviderStateMixin {
+  final _apiService = ApiService();
   late AnimationController _controller;
   List<User> users = [];
   List<User> filteredUsers = [];
@@ -54,20 +56,14 @@ class _UserListScreenState extends State<UserListScreen>
       });
     }
     try {
-      final response = await http.get(Uri.parse('https://dummyjson.com/users?page=$_currentPage'));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          final newUsers = (data['users'] as List).map((user) => User.fromJson(user)).toList();
-          users = loadMore ? [...users, ...newUsers] : newUsers;
-          filteredUsers = users;
-          isLoading = false;
-          _isFetchingMore = false;
-          _currentPage++;
-        });
-      } else {
-        throw Exception('Failed to load users');
-      }
+      final newUsers = await _apiService.getUsers(_currentPage);
+      setState(() {
+        users = loadMore ? [...users, ...newUsers] : newUsers;
+        filteredUsers = users;
+        isLoading = false;
+        _isFetchingMore = false;
+        _currentPage++;
+      });
     } catch (e) {
       setState(() {
         error = 'Failed to load users';
@@ -254,7 +250,7 @@ class _UserListScreenState extends State<UserListScreen>
           final user = filteredUsers[index];
           return _buildUserCard(user, index);
         },
-      ),
+      )
     );
   }
 
