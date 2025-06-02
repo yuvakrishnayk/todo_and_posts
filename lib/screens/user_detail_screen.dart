@@ -2,6 +2,8 @@
 import 'package:assignment/screens/create_post_screen.dart';
 import 'package:assignment/screens/full_user_detail_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../models/user.dart';
 
 class UserDetailScreen extends StatefulWidget {
@@ -13,11 +15,54 @@ class UserDetailScreen extends StatefulWidget {
 }
 
 class _UserDetailScreenState extends State<UserDetailScreen> {
-  List<Map<String, dynamic>> _todos = [
-    {'title': 'Todo Item 0', 'completed': true},
-    {'title': 'Todo Item 1', 'completed': false},
-    {'title': 'Todo Item 2', 'completed': true},
-  ];
+  List<Map<String, dynamic>> _todos = [];
+  List<Map<String, dynamic>> _posts = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    if (widget.user.id == null || widget.user.id.toString().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid user ID')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final postsResponse = await http.get(
+        Uri.parse('https://dummyjson.com/posts/user/${widget.user.id}'),
+      );
+      final todosResponse = await http.get(
+        Uri.parse('https://dummyjson.com/todos/user/${widget.user.id}'),
+      );
+
+      if (postsResponse.statusCode == 200 && todosResponse.statusCode == 200) {
+        final postsData = json.decode(postsResponse.body);
+        final todosData = json.decode(todosResponse.body);
+
+        setState(() {
+          _posts = List<Map<String, dynamic>>.from(postsData['posts'] ?? []);
+          _todos = List<Map<String, dynamic>>.from(todosData['todos'] ?? []);
+          _isLoading = false;
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to fetch data')),
+        );
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading data: $e')),
+      );
+    }
+  }
 
   void _addTodo() {
     setState(() {
@@ -134,62 +179,61 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               child: TabBarView(
                 children: [
                   // Posts Tab
-                  Builder(
-                    builder: (context) {
-                      final userPosts =
-                          PostRepository.posts
-                              .where((post) => post['userId'] == widget.user.id)
-                              .toList();
-                      return ListView.builder(
-                        itemCount: userPosts.length,
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : ListView.builder(
+                        itemCount: _posts.length,
                         itemBuilder: (context, index) {
-                          final post = userPosts[index];
+                          final post = _posts[index];
                           return Card(
                             margin: const EdgeInsets.all(8),
                             child: ListTile(
-                              title: Text(post['title'] ?? ''),
-                              subtitle: Text(post['body'] ?? ''),
+                              title: Text(post['title'] ?? 'No Title'),
+                              subtitle: Text(post['body'] ?? 'No Content'),
                             ),
                           );
                         },
-                      );
-                    },
-                  ),
+                      ),
 
                   // Todos Tab
-                  Column(
-                    children: [
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: _todos.length,
-                          itemBuilder: (context, index) {
-                            final todo = _todos[index];
-                            return CheckboxListTile(
-                              title: Row(
-                                children: [
-                                  Expanded(child: Text(todo['title'])),
-                                  IconButton(
-                                    icon: const Icon(Icons.edit, size: 20),
-                                    onPressed: () => _editTodoTitle(index),
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : Column(
+                        children: [
+                          Expanded(
+                            child: ListView.builder(
+                              itemCount: _todos.length,
+                              itemBuilder: (context, index) {
+                                final todo = _todos[index];
+                                return CheckboxListTile(
+                                  title: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(todo['title'] ?? 'No Title'),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.edit, size: 20),
+                                        onPressed: () => _editTodoTitle(index),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              value: todo['completed'],
-                              onChanged: (value) => _toggleTodo(index, value),
-                            );
-                          },
-                        ),
+                                  value: todo['completed'] ?? false,
+                                  onChanged: (value) =>
+                                      _toggleTodo(index, value),
+                                );
+                              },
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.add),
+                              label: const Text('Add Todo'),
+                              onPressed: _addTodo,
+                            ),
+                          ),
+                        ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: ElevatedButton.icon(
-                          icon: const Icon(Icons.add),
-                          label: const Text('Add Todo'),
-                          onPressed: _addTodo,
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
