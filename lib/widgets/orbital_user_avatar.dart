@@ -35,7 +35,7 @@ class OrbitalUserAvatar extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   image: DecorationImage(
-                    image: NetworkImage(user.avatar),
+                    image: NetworkImage(user.image),
                     fit: BoxFit.cover,
                   ),
                   border: Border.all(
@@ -54,7 +54,7 @@ class OrbitalUserAvatar extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              user.name.split(' ')[0],
+              user.firstName,
               style: Theme.of(context).textTheme.bodyMedium,
               overflow: TextOverflow.ellipsis,
             ),

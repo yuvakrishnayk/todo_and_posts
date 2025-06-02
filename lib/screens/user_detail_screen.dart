@@ -67,7 +67,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.user.name),
+        title: Text('${widget.user.firstName} ${widget.user.lastName}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -88,12 +88,12 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     tag: 'avatar-${widget.user.id}',
                     child: CircleAvatar(
                       radius: 50,
-                      backgroundImage: NetworkImage(widget.user.avatar),
+                      backgroundImage: NetworkImage(widget.user.image),
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    widget.user.name,
+                    '${widget.user.firstName} ${widget.user.lastName}',
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   Text(

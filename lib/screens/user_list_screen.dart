@@ -1,5 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../models/user.dart';
 import '../widgets/orbital_user_avatar.dart';
 import '../screens/user_detail_screen.dart'; // Add this import
@@ -42,13 +44,20 @@ class _UserListScreenState extends State<UserListScreen>
 
   Future<void> _loadUsers() async {
     try {
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
-      setState(() {
-        users = User.dummyData();
-        filteredUsers = users;
-        isLoading = false;
-      });
+      final response = await http.get(Uri.parse('https://dummyjson.com/users'));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          users =
+              (data['users'] as List)
+                  .map((user) => User.fromJson(user))
+                  .toList();
+          filteredUsers = users;
+          isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load users');
+      }
     } catch (e) {
       setState(() {
         error = 'Failed to load users';
@@ -62,7 +71,8 @@ class _UserListScreenState extends State<UserListScreen>
     setState(() {
       filteredUsers =
           users.where((user) {
-            return user.name.toLowerCase().contains(query) ||
+            return user.firstName.toLowerCase().contains(query) ||
+                user.lastName.toLowerCase().contains(query) ||
                 user.email.toLowerCase().contains(query);
           }).toList();
     });
@@ -125,7 +135,10 @@ class _UserListScreenState extends State<UserListScreen>
                   'User Directory',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface, // Dynamic text color
+                    color:
+                        Theme.of(
+                          context,
+                        ).colorScheme.onSurface, // Dynamic text color
                   ),
                 ),
               ),
@@ -144,14 +157,19 @@ class _UserListScreenState extends State<UserListScreen>
               child: TextField(
                 controller: _searchController,
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface, // Dynamic text color
+                  color:
+                      Theme.of(
+                        context,
+                      ).colorScheme.onSurface, // Dynamic text color
                 ), // Light theme text color
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Theme.of(context).colorScheme.surface,
                   hintText: 'Search users...',
                   hintStyle: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), // Dynamic hint text color
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(
+                      0.6,
+                    ), // Dynamic hint text color
                   ),
                   prefixIcon: const Icon(Icons.search, color: Colors.black54),
                   border: OutlineInputBorder(
@@ -181,7 +199,8 @@ class _UserListScreenState extends State<UserListScreen>
         child: Text(
           error,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Theme.of(context).colorScheme.error, // Dynamic error text color
+            color:
+                Theme.of(context).colorScheme.error, // Dynamic error text color
           ),
         ),
       );
@@ -192,7 +211,8 @@ class _UserListScreenState extends State<UserListScreen>
         child: Text(
           'No users found',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Theme.of(context).colorScheme.onSurface, // Dynamic text color
+            color:
+                Theme.of(context).colorScheme.onSurface, // Dynamic text color
           ),
         ),
       );
@@ -234,10 +254,13 @@ class _UserListScreenState extends State<UserListScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      user.name,
+                      '${user.firstName} ${user.lastName}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onSurface, // Dynamic text color
+                        color:
+                            Theme.of(
+                              context,
+                            ).colorScheme.onSurface, // Dynamic text color
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -246,7 +269,10 @@ class _UserListScreenState extends State<UserListScreen>
                     Text(
                       user.email,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface, // Dynamic text color
+                        color:
+                            Theme.of(
+                              context,
+                            ).colorScheme.onSurface, // Dynamic text color
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -259,7 +285,10 @@ class _UserListScreenState extends State<UserListScreen>
               IconButton(
                 icon: Icon(
                   Icons.chevron_right,
-                  color: Theme.of(context).colorScheme.onSurface, // Dynamic icon color
+                  color:
+                      Theme.of(
+                        context,
+                      ).colorScheme.onSurface, // Dynamic icon color
                 ),
                 onPressed: () => _navigateToUserDetail(user),
               ),
