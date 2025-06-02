@@ -27,9 +27,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
 
   Future<void> _fetchUserData() async {
     if (widget.user.id == null || widget.user.id.toString().isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Invalid user ID')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid user ID'))
+      );
       return;
     }
 
@@ -46,21 +46,29 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         final postsData = json.decode(postsResponse.body);
         final todosData = json.decode(todosResponse.body);
 
+        // Get local posts for this user
+        final localPosts = PostRepository.posts
+            .where((post) => post['userId'] == widget.user.id)
+            .toList();
+
         setState(() {
-          _posts = List<Map<String, dynamic>>.from(postsData['posts'] ?? []);
+          _posts = [
+            ...List<Map<String, dynamic>>.from(postsData['posts'] ?? []),
+            ...localPosts
+          ];
           _todos = List<Map<String, dynamic>>.from(todosData['todos'] ?? []);
           _isLoading = false;
         });
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Failed to fetch data')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to fetch data'))
+        );
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error loading data: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading data: $e'))
+      );
     }
   }
 
@@ -377,7 +385,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       ),
     );
     if (result == true) {
-      setState(() {}); // Refresh posts
+      _fetchUserData(); // Refresh posts when returning from create screen
     }
   }
 }
