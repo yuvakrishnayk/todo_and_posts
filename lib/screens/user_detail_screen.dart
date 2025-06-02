@@ -124,6 +124,10 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     );
   }
 
+  Future<void> _onRefresh() async {
+    await _fetchUserData();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -187,187 +191,195 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               child: TabBarView(
                 children: [
                   // Posts Tab
-                  _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : ListView.builder(
-                        itemCount: _posts.length,
-                        itemBuilder: (context, index) {
-                          final post = _posts[index];
-                          final tags = List<String>.from(post['tags'] ?? []);
-                          final reactions =
-                              post['reactions'] as Map<String, dynamic>? ?? {};
-                          final views = post['views'] ?? 0;
+                  RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    child: _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : ListView.builder(
+                            itemCount: _posts.length,
+                            itemBuilder: (context, index) {
+                              final post = _posts[index];
+                              final tags = List<String>.from(post['tags'] ?? []);
+                              final reactions =
+                                  post['reactions'] as Map<String, dynamic>? ?? {};
+                              final views = post['views'] ?? 0;
 
-                          return Card(
-                            margin: const EdgeInsets.all(8),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    post['title'] ?? 'No Title',
-                                    style:
-                                        Theme.of(context).textTheme.titleLarge,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    post['body'] ?? 'No Content',
-                                    style:
-                                        Theme.of(context).textTheme.bodyMedium,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  // Tags
-                                  if (tags.isNotEmpty)
-                                    Wrap(
-                                      spacing: 4,
-                                      children:
-                                          tags
-                                              .map(
-                                                (tag) => Chip(
-                                                  label: Text(tag),
-                                                  backgroundColor:
-                                                      Theme.of(context)
-                                                          .colorScheme
-                                                          .secondaryContainer,
-                                                  labelStyle: TextStyle(
-                                                    color:
-                                                        Theme.of(context)
-                                                            .colorScheme
-                                                            .onSecondaryContainer,
-                                                  ),
-                                                ),
-                                              )
-                                              .toList(),
-                                    ),
-                                  const SizedBox(height: 8),
-                                  // Reactions and Views
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                              return Card(
+                                margin: const EdgeInsets.all(8),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.thumb_up,
-                                            color:
-                                                Theme.of(
-                                                  context,
-                                                ).colorScheme.primary,
-                                            size: 20,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text('${reactions['likes'] ?? 0}'),
-                                          const SizedBox(width: 16),
-                                          Icon(
-                                            Icons.thumb_down,
-                                            color:
-                                                Theme.of(
-                                                  context,
-                                                ).colorScheme.error,
-                                            size: 20,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text('${reactions['dislikes'] ?? 0}'),
-                                        ],
+                                      Text(
+                                        post['title'] ?? 'No Title',
+                                        style:
+                                            Theme.of(context).textTheme.titleLarge,
                                       ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        post['body'] ?? 'No Content',
+                                        style:
+                                            Theme.of(context).textTheme.bodyMedium,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      // Tags
+                                      if (tags.isNotEmpty)
+                                        Wrap(
+                                          spacing: 4,
+                                          children:
+                                              tags
+                                                  .map(
+                                                    (tag) => Chip(
+                                                      label: Text(tag),
+                                                      backgroundColor:
+                                                          Theme.of(context)
+                                                              .colorScheme
+                                                              .secondaryContainer,
+                                                      labelStyle: TextStyle(
+                                                        color:
+                                                            Theme.of(context)
+                                                                .colorScheme
+                                                                .onSecondaryContainer,
+                                                      ),
+                                                    ),
+                                                  )
+                                                  .toList(),
+                                        ),
+                                      const SizedBox(height: 8),
+                                      // Reactions and Views
                                       Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
-                                          const Icon(
-                                            Icons.remove_red_eye,
-                                            size: 20,
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.thumb_up,
+                                                color:
+                                                    Theme.of(
+                                                      context,
+                                                    ).colorScheme.primary,
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text('${reactions['likes'] ?? 0}'),
+                                              const SizedBox(width: 16),
+                                              Icon(
+                                                Icons.thumb_down,
+                                                color:
+                                                    Theme.of(
+                                                      context,
+                                                    ).colorScheme.error,
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text('${reactions['dislikes'] ?? 0}'),
+                                            ],
                                           ),
-                                          const SizedBox(width: 4),
-                                          Text('$views views'),
+                                          Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.remove_red_eye,
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text('$views views'),
+                                            ],
+                                          ),
                                         ],
                                       ),
                                     ],
                                   ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
 
                   // Todos Tab
-                  _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : Column(
-                        children: [
-                          Expanded(
-                            child: ListView.builder(
-                              itemCount: _todos.length,
-                              itemBuilder: (context, index) {
-                                final todo = _todos[index];
-                                return Card(
-                                  margin: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
+                  RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    child: _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : Column(
+                            children: [
+                              Expanded(
+                                child: ListView.builder(
+                                  // Add physics to enable refresh on empty list
+                                  physics: const AlwaysScrollableScrollPhysics(),
+                                  itemCount: _todos.length,
+                                  itemBuilder: (context, index) {
+                                    final todo = _todos[index];
+                                    return Card(
+                                      margin: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            Expanded(
-                                              child: Text(
-                                                todo['todo'] ?? 'No Title',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleMedium
-                                                    ?.copyWith(
-                                                      decoration:
-                                                          todo['completed'] ==
-                                                                  true
-                                                              ? TextDecoration
-                                                                  .lineThrough
-                                                              : null,
-                                                    ),
-                                              ),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    todo['todo'] ?? 'No Title',
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .titleMedium
+                                                        ?.copyWith(
+                                                          decoration:
+                                                              todo['completed'] ==
+                                                                      true
+                                                                  ? TextDecoration
+                                                                      .lineThrough
+                                                                  : null,
+                                                        ),
+                                                  ),
+                                                ),
+                                                IconButton(
+                                                  icon: const Icon(
+                                                    Icons.edit,
+                                                    size: 20,
+                                                  ),
+                                                  onPressed:
+                                                      () => _editTodoTitle(index),
+                                                ),
+                                              ],
                                             ),
-                                            IconButton(
-                                              icon: const Icon(
-                                                Icons.edit,
-                                                size: 20,
-                                              ),
-                                              onPressed:
-                                                  () => _editTodoTitle(index),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: [
+                                                Switch(
+                                                  value: todo['completed'] ?? false,
+                                                  onChanged:
+                                                      (value) =>
+                                                          _toggleTodo(index, value),
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.end,
-                                          children: [
-                                            Switch(
-                                              value: todo['completed'] ?? false,
-                                              onChanged:
-                                                  (value) =>
-                                                      _toggleTodo(index, value),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: ElevatedButton.icon(
+                                  icon: const Icon(Icons.add),
+                                  label: const Text('Add Todo'),
+                                  onPressed: _addTodo,
+                                ),
+                              ),
+                            ],
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: ElevatedButton.icon(
-                              icon: const Icon(Icons.add),
-                              label: const Text('Add Todo'),
-                              onPressed: _addTodo,
-                            ),
-                          ),
-                        ],
-                      ),
+                  ),
                 ],
               ),
             ),

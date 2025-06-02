@@ -95,6 +95,14 @@ class _UserListScreenState extends State<UserListScreen>
     });
   }
 
+  Future<void> _refreshUsers() async {
+    setState(() {
+      _currentPage = 1;
+      isLoading = true;
+    });
+    await _loadUsers();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -207,7 +215,7 @@ class _UserListScreenState extends State<UserListScreen>
   }
 
   Widget _buildUserList() {
-    if (isLoading) {
+    if (isLoading && filteredUsers.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -216,8 +224,7 @@ class _UserListScreenState extends State<UserListScreen>
         child: Text(
           error,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color:
-                Theme.of(context).colorScheme.error, // Dynamic error text color
+            color: Theme.of(context).colorScheme.error,
           ),
         ),
       );
@@ -228,24 +235,26 @@ class _UserListScreenState extends State<UserListScreen>
         child: Text(
           'No users found',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color:
-                Theme.of(context).colorScheme.onSurface, // Dynamic text color
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       );
     }
 
-    return ListView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.all(16),
-      itemCount: filteredUsers.length + (_isFetchingMore ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index == filteredUsers.length) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final user = filteredUsers[index];
-        return _buildUserCard(user, index);
-      },
+    return RefreshIndicator(
+      onRefresh: _refreshUsers,
+      child: ListView.builder(
+        controller: _scrollController,
+        padding: const EdgeInsets.all(16),
+        itemCount: filteredUsers.length + (_isFetchingMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index == filteredUsers.length) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final user = filteredUsers[index];
+          return _buildUserCard(user, index);
+        },
+      ),
     );
   }
 
