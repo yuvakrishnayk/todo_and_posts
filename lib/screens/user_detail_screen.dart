@@ -12,6 +12,57 @@ class UserDetailScreen extends StatefulWidget {
 }
 
 class _UserDetailScreenState extends State<UserDetailScreen> {
+  List<Map<String, dynamic>> _todos = [
+    {'title': 'Todo Item 0', 'completed': true},
+    {'title': 'Todo Item 1', 'completed': false},
+    {'title': 'Todo Item 2', 'completed': true},
+  ];
+
+  void _addTodo() {
+    setState(() {
+      _todos.add({
+        'title': 'Todo Item ${_todos.length}',
+        'completed': false,
+      });
+    });
+  }
+
+  void _toggleTodo(int index, bool? value) {
+    setState(() {
+      _todos[index]['completed'] = value ?? false;
+    });
+  }
+
+  void _editTodoTitle(int index) async {
+    final controller = TextEditingController(text: _todos[index]['title']);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Todo'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Todo Title'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (result != null && result.trim().isNotEmpty) {
+      setState(() {
+        _todos[index]['title'] = result.trim();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -94,15 +145,38 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                   ),
 
                   // Todos Tab
-                  ListView.builder(
-                    itemCount: 3, // Replace with actual todos
-                    itemBuilder: (context, index) {
-                      return CheckboxListTile(
-                        title: Text('Todo Item $index'),
-                        value: index.isEven,
-                        onChanged: (value) {},
-                      );
-                    },
+                  Column(
+                    children: [
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: _todos.length,
+                          itemBuilder: (context, index) {
+                            final todo = _todos[index];
+                            return CheckboxListTile(
+                              title: Row(
+                                children: [
+                                  Expanded(child: Text(todo['title'])),
+                                  IconButton(
+                                    icon: const Icon(Icons.edit, size: 20),
+                                    onPressed: () => _editTodoTitle(index),
+                                  ),
+                                ],
+                              ),
+                              value: todo['completed'],
+                              onChanged: (value) => _toggleTodo(index, value),
+                            );
+                          },
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.add),
+                          label: const Text('Add Todo'),
+                          onPressed: _addTodo,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

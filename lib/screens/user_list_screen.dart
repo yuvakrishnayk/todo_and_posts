@@ -5,7 +5,9 @@ import '../widgets/orbital_user_avatar.dart';
 import '../screens/user_detail_screen.dart'; // Add this import
 
 class UserListScreen extends StatefulWidget {
-  const UserListScreen({super.key});
+  final VoidCallback onToggleTheme;
+
+  const UserListScreen({super.key, required this.onToggleTheme});
 
   @override
   State<UserListScreen> createState() => _UserListScreenState();
@@ -116,12 +118,23 @@ class _UserListScreenState extends State<UserListScreen>
       ),
       child: Column(
         children: [
-          Text(
-            'User Directory',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'User Directory',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87, // Always use light theme text color
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.brightness_6, color: Colors.black87),
+                onPressed: widget.onToggleTheme,
+                tooltip: 'Toggle Theme',
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           Hero(
@@ -130,11 +143,15 @@ class _UserListScreenState extends State<UserListScreen>
               color: Colors.transparent,
               child: TextField(
                 controller: _searchController,
+                style: const TextStyle(
+                  color: Colors.black87,
+                ), // Light theme text color
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Theme.of(context).colorScheme.surface,
                   hintText: 'Search users...',
-                  prefixIcon: const Icon(Icons.search),
+                  hintStyle: const TextStyle(color: Colors.black54),
+                  prefixIcon: const Icon(Icons.search, color: Colors.black54),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
                     borderSide: BorderSide.none,
@@ -162,7 +179,7 @@ class _UserListScreenState extends State<UserListScreen>
         child: Text(
           error,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Theme.of(context).colorScheme.error,
+            color: Colors.red, // Error in light theme
           ),
         ),
       );
@@ -173,7 +190,7 @@ class _UserListScreenState extends State<UserListScreen>
         child: Text(
           'No users found',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Theme.of(context).colorScheme.onBackground,
+            color: Colors.black87, // Light theme text color
           ),
         ),
       );
@@ -218,6 +235,7 @@ class _UserListScreenState extends State<UserListScreen>
                       user.name,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: Colors.black87, // Light theme text color
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -225,7 +243,9 @@ class _UserListScreenState extends State<UserListScreen>
                     const SizedBox(height: 4),
                     Text(
                       user.email,
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.black87, // Light theme text color
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -237,7 +257,7 @@ class _UserListScreenState extends State<UserListScreen>
               IconButton(
                 icon: Icon(
                   Icons.chevron_right,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: Colors.black87, // Light theme icon color
                 ),
                 onPressed: () => _navigateToUserDetail(user),
               ),
@@ -251,9 +271,7 @@ class _UserListScreenState extends State<UserListScreen>
   void _navigateToUserDetail(User user) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => UserDetailScreen(user: user),
-      ),
+      MaterialPageRoute(builder: (context) => UserDetailScreen(user: user)),
     );
   }
 }
@@ -267,10 +285,11 @@ class OrbitPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final paint = Paint()
-      ..color = Colors.deepPurple.withOpacity(0.05)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
+    final paint =
+        Paint()
+          ..color = Colors.deepPurple.withOpacity(0.05)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.0;
 
     // Draw multiple subtle orbits
     for (var i = 1; i <= 3; i++) {
