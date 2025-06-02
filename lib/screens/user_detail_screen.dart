@@ -1,5 +1,6 @@
 // screens/user_detail_screen.dart
 import 'package:assignment/screens/create_post_screen.dart';
+import 'package:assignment/screens/full_user_detail_screen.dart';
 import 'package:flutter/material.dart';
 import '../models/user.dart';
 
@@ -20,10 +21,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
 
   void _addTodo() {
     setState(() {
-      _todos.add({
-        'title': 'Todo Item ${_todos.length}',
-        'completed': false,
-      });
+      _todos.add({'title': 'Todo Item ${_todos.length}', 'completed': false});
     });
   }
 
@@ -37,30 +35,40 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     final controller = TextEditingController(text: _todos[index]['title']);
     final result = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Todo'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(labelText: 'Todo Title'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Edit Todo'),
+            content: TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: const InputDecoration(labelText: 'Todo Title'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, controller.text),
+                child: const Text('Save'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
     );
     if (result != null && result.trim().isNotEmpty) {
       setState(() {
         _todos[index]['title'] = result.trim();
       });
     }
+  }
+
+  void _navigateToUserDetails(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FullUserDetailScreen(user: widget.user),
+      ),
+    );
   }
 
   @override
@@ -72,6 +80,10 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _navigateToCreatePost(context),
+          ),
+          IconButton(
+            icon: const Icon(Icons.info),
+            onPressed: () => _navigateToUserDetails(context),
           ),
         ],
       ),
