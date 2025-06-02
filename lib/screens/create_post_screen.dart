@@ -1,9 +1,15 @@
 // screens/create_post_screen.dart
 import 'package:flutter/material.dart';
-import 'post_list_screen.dart';
+
+// Add this class at the top or in a separate file for shared access
+class PostRepository {
+  // Add userId to each post
+  static final List<Map<String, dynamic>> posts = [];
+}
 
 class CreatePostScreen extends StatefulWidget {
-  const CreatePostScreen({super.key});
+  final int userId;
+  const CreatePostScreen({super.key, required this.userId});
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
@@ -13,7 +19,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _bodyController = TextEditingController();
-  static final List<Map<String, String>> _posts = [];
 
   @override
   Widget build(BuildContext context) {
@@ -71,17 +76,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   void _submitPost() {
     if (_formKey.currentState!.validate()) {
-      _posts.add({
+      PostRepository.posts.add({
+        'userId': widget.userId,
         'title': _titleController.text,
         'body': _bodyController.text,
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Post created successfully')),
       );
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => PostListScreen(posts: _posts)),
-      );
+      _titleController.clear();
+      _bodyController.clear();
+      // Pop and notify parent to refresh
+      Navigator.of(context).pop(true);
     }
   }
 }

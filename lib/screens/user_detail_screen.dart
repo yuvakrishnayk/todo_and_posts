@@ -3,16 +3,20 @@ import 'package:assignment/screens/create_post_screen.dart';
 import 'package:flutter/material.dart';
 import '../models/user.dart';
 
-class UserDetailScreen extends StatelessWidget {
+class UserDetailScreen extends StatefulWidget {
   final User user;
-
   const UserDetailScreen({super.key, required this.user});
 
+  @override
+  State<UserDetailScreen> createState() => _UserDetailScreenState();
+}
+
+class _UserDetailScreenState extends State<UserDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(user.name),
+        title: Text(widget.user.name),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -30,19 +34,19 @@ class UserDetailScreen extends StatelessWidget {
               child: Column(
                 children: [
                   Hero(
-                    tag: 'avatar-${user.id}',
+                    tag: 'avatar-${widget.user.id}',
                     child: CircleAvatar(
                       radius: 50,
-                      backgroundImage: NetworkImage(user.avatar),
+                      backgroundImage: NetworkImage(widget.user.avatar),
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    user.name,
+                    widget.user.name,
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   Text(
-                    user.email,
+                    widget.user.email,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
@@ -67,15 +71,24 @@ class UserDetailScreen extends StatelessWidget {
               child: TabBarView(
                 children: [
                   // Posts Tab
-                  ListView.builder(
-                    itemCount: 5, // Replace with actual posts
-                    itemBuilder: (context, index) {
-                      return Card(
-                        margin: const EdgeInsets.all(8),
-                        child: ListTile(
-                          title: Text('Post Title $index'),
-                          subtitle: Text('Post content...'),
-                        ),
+                  Builder(
+                    builder: (context) {
+                      final userPosts =
+                          PostRepository.posts
+                              .where((post) => post['userId'] == widget.user.id)
+                              .toList();
+                      return ListView.builder(
+                        itemCount: userPosts.length,
+                        itemBuilder: (context, index) {
+                          final post = userPosts[index];
+                          return Card(
+                            margin: const EdgeInsets.all(8),
+                            child: ListTile(
+                              title: Text(post['title'] ?? ''),
+                              subtitle: Text(post['body'] ?? ''),
+                            ),
+                          );
+                        },
                       );
                     },
                   ),
@@ -100,10 +113,15 @@ class UserDetailScreen extends StatelessWidget {
     );
   }
 
-  void _navigateToCreatePost(BuildContext context) {
-    Navigator.push(
+  Future<void> _navigateToCreatePost(BuildContext context) async {
+    final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const CreatePostScreen()),
+      MaterialPageRoute(
+        builder: (context) => CreatePostScreen(userId: widget.user.id),
+      ),
     );
+    if (result == true) {
+      setState(() {}); // Refresh posts
+    }
   }
 }
