@@ -23,6 +23,9 @@ class _UserListScreenState extends State<UserListScreen>
   bool isLoading = true;
   String error = '';
   final TextEditingController _searchController = TextEditingController();
+  late ScrollController _scrollController;
+  int _currentPage = 1;
+  bool _isFetchingMore = false;
 
   @override
   void initState() {
@@ -31,6 +34,7 @@ class _UserListScreenState extends State<UserListScreen>
       vsync: this,
       duration: const Duration(seconds: 30),
     )..repeat();
+    _scrollController = ScrollController()..addListener(_onScroll);
     _loadUsers();
     _searchController.addListener(_filterUsers);
   }
@@ -39,21 +43,27 @@ class _UserListScreenState extends State<UserListScreen>
   void dispose() {
     _controller.dispose();
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadUsers() async {
+  Future<void> _loadUsers({bool loadMore = false}) async {
+    if (loadMore) {
+      setState(() {
+        _isFetchingMore = true;
+      });
+    }
     try {
-      final response = await http.get(Uri.parse('https://dummyjson.com/users'));
+      final response = await http.get(Uri.parse('https://dummyjson.com/users?page=$_currentPage'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
-          users =
-              (data['users'] as List)
-                  .map((user) => User.fromJson(user))
-                  .toList();
+          final newUsers = (data['users'] as List).map((user) => User.fromJson(user)).toList();
+          users = loadMore ? [...users, ...newUsers] : newUsers;
           filteredUsers = users;
           isLoading = false;
+          _isFetchingMore = false;
+          _currentPage++;
         });
       } else {
         throw Exception('Failed to load users');
@@ -62,7 +72,14 @@ class _UserListScreenState extends State<UserListScreen>
       setState(() {
         error = 'Failed to load users';
         isLoading = false;
+        _isFetchingMore = false;
       });
+    }
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent && !_isFetchingMore) {
+      _loadUsers(loadMore: true);
     }
   }
 
@@ -219,9 +236,13 @@ class _UserListScreenState extends State<UserListScreen>
     }
 
     return ListView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.all(16),
-      itemCount: filteredUsers.length,
+      itemCount: filteredUsers.length + (_isFetchingMore ? 1 : 0),
       itemBuilder: (context, index) {
+        if (index == filteredUsers.length) {
+          return const Center(child: CircularProgressIndicator());
+        }
         final user = filteredUsers[index];
         return _buildUserCard(user, index);
       },
