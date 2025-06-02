@@ -1,9 +1,8 @@
-// screens/user_list_screen.dart
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../widgets/orbital_user_avatar.dart';
+import '../screens/user_detail_screen.dart'; // Add this import
 
 class UserListScreen extends StatefulWidget {
   const UserListScreen({super.key});
@@ -30,6 +29,13 @@ class _UserListScreenState extends State<UserListScreen>
     )..repeat();
     _loadUsers();
     _searchController.addListener(_filterUsers);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadUsers() async {
@@ -79,84 +85,180 @@ class _UserListScreenState extends State<UserListScreen>
 
           Column(
             children: [
-              // Search "Sun"
-              Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Hero(
-                  tag: 'search-sun',
-                  child: Material(
-                    color: Colors.transparent,
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Theme.of(context).colorScheme.surface,
-                        hintText: 'Search users...',
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 15,
-                          horizontal: 20,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              // App bar with search
+              _buildAppBar(context),
 
-              // User List
-              Expanded(
-                child: isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : error.isNotEmpty
-                        ? Center(child: Text(error))
-                        : NotificationListener<ScrollNotification>(
-                            onNotification: (notification) {
-                              setState(() {
-                                _controller.value =
-                                    notification.metrics.pixels / 1000;
-                              });
-                              return false;
-                            },
-                            child: ListView.builder(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: filteredUsers.length,
-                              itemBuilder: (context, index) {
-                                final user = filteredUsers[index];
-                                return Card(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  child: ListTile(
-                                    leading: CircleAvatar(
-                                      backgroundImage: NetworkImage(""),
-                                      radius: 25,
-                                    ),
-                                    title: Text(
-                                      user.name,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    subtitle: Text(user.email),
-                                    onTap: () {
-                                      // Handle user tap
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-              ),
+              // Main content
+              Expanded(child: _buildUserList()),
             ],
           ),
         ],
       ),
     );
   }
+
+  Widget _buildAppBar(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.only(top: 50, left: 20, right: 20, bottom: 20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface.withOpacity(0.8),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            'User Directory',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Hero(
+            tag: 'search-sun',
+            child: Material(
+              color: Colors.transparent,
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surface,
+                  hintText: 'Search users...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 15,
+                    horizontal: 20,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserList() {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (error.isNotEmpty) {
+      return Center(
+        child: Text(
+          error,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: Theme.of(context).colorScheme.error,
+          ),
+        ),
+      );
+    }
+
+    if (filteredUsers.isEmpty) {
+      return Center(
+        child: Text(
+          'No users found',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: Theme.of(context).colorScheme.onBackground,
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: filteredUsers.length,
+      itemBuilder: (context, index) {
+        final user = filteredUsers[index];
+        return _buildUserCard(user, index);
+      },
+    );
+  }
+
+  Widget _buildUserCard(User user, int index) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: InkWell(
+        onTap: () => _navigateToUserDetail(user),
+        borderRadius: BorderRadius.circular(15),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Orbital Avatar
+              OrbitalUserAvatar(
+                user: user,
+                animationValue: _controller.value + index * 0.1,
+                size: 60,
+              ),
+              const SizedBox(width: 16),
+
+              // User Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user.name,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      user.email,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+
+              // Action button
+              IconButton(
+                icon: Icon(
+                  Icons.chevron_right,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                onPressed: () => _navigateToUserDetail(user),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _navigateToUserDetail(User user) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => UserDetailScreen(user: user),
+      ),
+    );
+  }
 }
 
+// Custom painter for animated orbits in the background
 class OrbitPainter extends CustomPainter {
   final double animationValue;
 
@@ -165,18 +267,17 @@ class OrbitPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final paint =
-        Paint()
-          ..color = Colors.deepPurple.withOpacity(0.1)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5;
+    final paint = Paint()
+      ..color = Colors.deepPurple.withOpacity(0.05)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
 
-    // Draw multiple orbits
-    for (var i = 1; i <= 5; i++) {
-      final radius = 50.0 * i;
+    // Draw multiple subtle orbits
+    for (var i = 1; i <= 3; i++) {
+      final radius = 100.0 * i;
       canvas.drawCircle(
         center,
-        radius + sin(animationValue * 2 * pi) * 10,
+        radius + sin(animationValue * 2 * pi) * 5,
         paint,
       );
     }

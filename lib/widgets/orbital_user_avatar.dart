@@ -12,7 +12,7 @@ class OrbitalUserAvatar extends StatelessWidget {
   const OrbitalUserAvatar({
     super.key,
     required this.user,
-    required this.animationValue,
+    required this.animationValue, required int size,
   });
 
   @override
