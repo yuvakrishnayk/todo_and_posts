@@ -1,10 +1,11 @@
+import 'package:assignment/bloc/user_bloc.dart';
+import 'package:assignment/bloc/user_event.dart';
+import 'package:assignment/bloc/user_state.dart';
+import 'package:assignment/models/user.dart';
 import 'package:assignment/screens/create_post_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/user_bloc.dart';
-import '../bloc/user_event.dart';
-import '../bloc/user_state.dart';
-import '../models/user.dart';
+
 
 class UserDetailScreen extends StatefulWidget {
   final User user;

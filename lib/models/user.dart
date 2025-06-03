@@ -1,4 +1,3 @@
-// models/user.dart
 class User {
   final int id;
   final String firstName;
@@ -114,7 +113,6 @@ class User {
           state: 'CA',
         ),
       ),
-      // Add more dummy users...
     ];
   }
 }

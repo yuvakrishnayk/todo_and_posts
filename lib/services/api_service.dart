@@ -1,7 +1,7 @@
+import 'package:assignment/models/user.dart';
+import 'package:assignment/utils/api_exception.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../models/user.dart';
-import '../utils/api_exception.dart';
 
 class ApiService {
   static const String baseUrl = 'https://dummyjson.com';

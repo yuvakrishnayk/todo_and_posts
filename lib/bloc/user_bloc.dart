@@ -1,9 +1,10 @@
 import 'dart:convert';
+import 'package:assignment/bloc/user_event.dart';
+import 'package:assignment/bloc/user_state.dart';
+import 'package:assignment/services/api_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
-import '../services/api_service.dart';
-import 'user_event.dart';
-import 'user_state.dart';
+
 
 class UserBloc extends Bloc<UserEvent, UserState> {
   final ApiService apiService;
@@ -51,7 +52,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     RefreshUsers event,
     Emitter<UserState> emit,
   ) async {
-    currentPage = 1; // Reset to first page
+    currentPage = 1;
     try {
       emit(UserLoading());
       final users = await apiService.getUsers(currentPage);

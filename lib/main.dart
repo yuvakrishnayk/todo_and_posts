@@ -1,10 +1,11 @@
+import 'package:assignment/bloc/user_bloc.dart';
+import 'package:assignment/bloc/user_event.dart';
 import 'package:assignment/screens/user_list_screen.dart';
+import 'package:assignment/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'bloc/user_bloc.dart';
-import 'bloc/user_event.dart';
-import 'services/api_service.dart';
+
 
 void main() {
   final apiService = ApiService();
@@ -32,7 +33,6 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Define text theme with Google Fonts
     final textTheme = TextTheme(
       displayLarge: GoogleFonts.poppins(
         fontSize: 32,

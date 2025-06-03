@@ -1,13 +1,13 @@
 import 'dart:math';
 import 'dart:ui';
+import 'package:assignment/bloc/user_bloc.dart';
+import 'package:assignment/bloc/user_event.dart';
+import 'package:assignment/bloc/user_state.dart';
+import 'package:assignment/models/user.dart';
+import 'package:assignment/screens/user_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-import '../bloc/user_bloc.dart';
-import '../bloc/user_event.dart';
-import '../bloc/user_state.dart';
-import '../models/user.dart';
-import '../screens/user_detail_screen.dart';
 
 class UserListScreen extends StatefulWidget {
   final VoidCallback onToggleTheme;
