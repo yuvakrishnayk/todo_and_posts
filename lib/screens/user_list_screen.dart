@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import '../bloc/user_bloc.dart';
 import '../bloc/user_event.dart';
 import '../bloc/user_state.dart';
@@ -22,9 +23,10 @@ class _UserListScreenState extends State<UserListScreen>
   late AnimationController _controller;
   List<User> filteredUsers = [];
   final TextEditingController _searchController = TextEditingController();
-  late ScrollController _scrollController;
-  int _currentPage = 1;
-
+  static const _pageSize = 20;
+  final PagingController<int, User> _pagingController = PagingController(
+    firstPageKey: 1,
+  );
   @override
   void initState() {
     super.initState();
@@ -32,7 +34,7 @@ class _UserListScreenState extends State<UserListScreen>
       vsync: this,
       duration: const Duration(seconds: 30),
     )..repeat();
-    _scrollController = ScrollController()..addListener(_onScroll);
+    _pagingController.addPageRequestListener(_fetchPage);
     _searchController.addListener(_filterUsers);
   }
 
@@ -40,38 +42,60 @@ class _UserListScreenState extends State<UserListScreen>
   void dispose() {
     _controller.dispose();
     _searchController.dispose();
-    _scrollController.dispose();
+    _pagingController.dispose();
     super.dispose();
   }
 
-  void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent) {
-      // Load more users when reaching the end
+  Future<void> _fetchPage(int pageKey) async {
+    try {
       context.read<UserBloc>().add(LoadUsers());
+
+      // Listen for state changes to update the paging controller
+      final userBloc = context.read<UserBloc>();
+      final currentState = userBloc.state;
+
+      if (currentState is UsersLoaded) {
+        final newItems = currentState.users;
+        final isLastPage = newItems.length < _pageSize;
+
+        if (isLastPage) {
+          _pagingController.appendLastPage(newItems);
+        } else {
+          _pagingController.appendPage(newItems, pageKey + 1);
+        }
+      }
+    } catch (error) {
+      _pagingController.error = error;
     }
   }
 
   void _filterUsers() {
     final query = _searchController.text.toLowerCase();
     final currentState = context.read<UserBloc>().state;
+
     if (currentState is UsersLoaded) {
       setState(() {
         if (query.isEmpty) {
           filteredUsers = currentState.users;
         } else {
-          filteredUsers = currentState.users.where((user) {
-            return user.firstName.toLowerCase().contains(query) ||
-                user.lastName.toLowerCase().contains(query) ||
-                user.email.toLowerCase().contains(query);
-          }).toList();
+          filteredUsers =
+              currentState.users.where((user) {
+                return user.firstName.toLowerCase().contains(query) ||
+                    user.lastName.toLowerCase().contains(query) ||
+                    user.email.toLowerCase().contains(query);
+              }).toList();
         }
       });
+
+      // Reset paging controller when filter changes
+      _pagingController.refresh();
     }
   }
 
   Future<void> _refreshUsers() async {
+    _pagingController.refresh();
     context.read<UserBloc>().add(RefreshUsers());
+    // The RefreshUsers event will reset the currentPage to 1 in the UserBloc
     return Future.delayed(
       const Duration(milliseconds: 300),
     ); // Give time for state to update
@@ -104,6 +128,7 @@ class _UserListScreenState extends State<UserListScreen>
                 child: BlocConsumer<UserBloc, UserState>(
                   listener: (context, state) {
                     if (state is UsersLoaded) {
+                      // Update filtered users for search
                       setState(() {
                         filteredUsers =
                             _searchController.text.isEmpty
@@ -120,16 +145,29 @@ class _UserListScreenState extends State<UserListScreen>
                                       user.email.toLowerCase().contains(query);
                                 }).toList();
                       });
+
+                      // Update paging controller when new users are loaded
+                      final currentPageKey = _pagingController.nextPageKey ?? 1;
+                      final isLastPage = state.users.length < _pageSize;
+
+                      if (isLastPage) {
+                        _pagingController.appendLastPage(state.users);
+                      } else {
+                        _pagingController.appendPage(
+                          state.users,
+                          currentPageKey + 1,
+                        );
+                      }
+                    }
+
+                    if (state is UserError) {
+                      _pagingController.error = state.message;
                     }
                   },
                   builder: (context, state) {
                     if (state is UserInitial) {
                       // Trigger loading on initial state
                       context.read<UserBloc>().add(LoadUsers());
-                    }
-
-                    if (state is UserLoading && filteredUsers.isEmpty) {
-                      return const Center(child: CircularProgressIndicator());
                     }
 
                     if (state is UserError) {
@@ -140,19 +178,6 @@ class _UserListScreenState extends State<UserListScreen>
                             context,
                           ).textTheme.bodyLarge?.copyWith(
                             color: Theme.of(context).colorScheme.error,
-                          ),
-                        ),
-                      );
-                    }
-
-                    if (filteredUsers.isEmpty && state is! UserLoading) {
-                      return Center(
-                        child: Text(
-                          'No users found',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodyLarge?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       );
@@ -250,24 +275,55 @@ class _UserListScreenState extends State<UserListScreen>
   }
 
   Widget _buildUserList(bool isLoadingMore) {
+    final query = _searchController.text.toLowerCase();
+
+    if (query.isNotEmpty) {
+      // If we have an active search query, use the filtered list
+      return RefreshIndicator(
+        onRefresh: _refreshUsers,
+        child: ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: filteredUsers.length,
+          itemBuilder: (context, index) {
+            final user = filteredUsers[index];
+            return _buildUserCard(user, index);
+          },
+        ),
+      );
+    }
+
+    // Use PagedListView for normal mode (no filter)
     return RefreshIndicator(
       onRefresh: _refreshUsers,
-      child: ListView.builder(
-        controller: _scrollController,
+      child: PagedListView<int, User>(
+        pagingController: _pagingController,
         padding: const EdgeInsets.all(16),
-        itemCount: filteredUsers.length + (isLoadingMore ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index == filteredUsers.length) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: CircularProgressIndicator(),
+        builderDelegate: PagedChildBuilderDelegate<User>(
+          itemBuilder: (context, user, index) => _buildUserCard(user, index),
+          firstPageProgressIndicatorBuilder:
+              (_) => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CircularProgressIndicator(),
+                ),
               ),
-            );
-          }
-          final user = filteredUsers[index];
-          return _buildUserCard(user, index);
-        },
+          newPageProgressIndicatorBuilder:
+              (_) => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+          noItemsFoundIndicatorBuilder:
+              (_) => Center(
+                child: Text(
+                  'No users found',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ),
+        ),
       ),
     );
   }
@@ -344,6 +400,7 @@ class _UserListScreenState extends State<UserListScreen>
       ),
     );
   }
+
   void _navigateToUserDetail(User user) async {
     await Navigator.push(
       context,

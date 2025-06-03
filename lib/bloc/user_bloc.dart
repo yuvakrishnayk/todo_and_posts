@@ -16,12 +16,13 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     on<LoadUserPosts>(_onLoadUserPosts);
     on<LoadUserTodos>(_onLoadUserTodos);
   }
-
   Future<void> _onLoadUsers(LoadUsers event, Emitter<UserState> emit) async {
     try {
       emit(UserLoading());
       final users = await apiService.getUsers(currentPage);
       emit(UsersLoaded(users));
+      // Increment page for the next load
+      currentPage++;
     } catch (e) {
       emit(UserError(e.toString()));
     }
