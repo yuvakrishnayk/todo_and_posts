@@ -17,6 +17,7 @@ class User {
   final String eyeColor;
   final String hairColor;
   final String hairType;
+  final Address address;
 
   User({
     required this.id,
@@ -36,6 +37,7 @@ class User {
     required this.eyeColor,
     required this.hairColor,
     required this.hairType,
+    required this.address,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -57,6 +59,10 @@ class User {
       eyeColor: json['eyeColor'],
       hairColor: json['hair']['color'],
       hairType: json['hair']['type'],
+      address: Address(
+        city: json['address']['city'],
+        state: json['address']['state'],
+      ),
     );
   }
 
@@ -80,6 +86,10 @@ class User {
         eyeColor: 'brown',
         hairColor: 'black',
         hairType: 'curly',
+        address: Address(
+          city: 'New York',
+          state: 'NY',
+        ),
       ),
       User(
         id: 2,
@@ -99,8 +109,22 @@ class User {
         eyeColor: 'blue',
         hairColor: 'blonde',
         hairType: 'straight',
+        address: Address(
+          city: 'Los Angeles',
+          state: 'CA',
+        ),
       ),
       // Add more dummy users...
     ];
   }
+}
+
+class Address {
+  final String city;
+  final String state;
+
+  Address({
+    required this.city,
+    required this.state,
+  });
 }

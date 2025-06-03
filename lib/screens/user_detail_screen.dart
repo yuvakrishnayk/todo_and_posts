@@ -20,6 +20,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   Future<void> _onRefresh() async {
     _fetchUserData();
   }
+
   List<Map<String, dynamic>> _todos = [];
   List<Map<String, dynamic>> _posts = [];
 
@@ -72,7 +73,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           }
         },
         child: DefaultTabController(
-          length: 2,
+          length: 3, // Changed from 2 to 3
           child: NestedScrollView(
             headerSliverBuilder: (context, innerBoxIsScrolled) {
               return [
@@ -118,21 +119,27 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                                 ),
                                 child: CircleAvatar(
                                   radius: 60,
-                                  backgroundImage: NetworkImage(widget.user.image),
+                                  backgroundImage: NetworkImage(
+                                    widget.user.image,
+                                  ),
                                 ),
                               ),
                             ),
                             const SizedBox(height: 16),
                             Text(
                               '${widget.user.firstName} ${widget.user.lastName}',
-                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              style: Theme.of(
+                                context,
+                              ).textTheme.headlineSmall?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             Text(
                               widget.user.email,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.copyWith(
                                 color: Colors.white.withOpacity(0.8),
                               ),
                             ),
@@ -160,6 +167,16 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
+                              const Icon(Icons.person),
+                              const SizedBox(width: 8),
+                              const Text('Profile'),
+                            ],
+                          ),
+                        ),
+                        Tab(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
                               const Icon(Icons.article),
                               const SizedBox(width: 8),
                               Text('Posts (${_posts.length})'),
@@ -177,8 +194,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                           ),
                         ),
                       ],
-                      indicatorWeight: 3,
-                      indicatorSize: TabBarIndicatorSize.label,
                     ),
                   ),
                   pinned: true,
@@ -187,37 +202,146 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             },
             body: TabBarView(
               children: [
+                // Profile Tab
+                SingleChildScrollView(child: _buildUserInfoCard()),
                 // Posts Tab
                 RefreshIndicator(
                   onRefresh: _onRefresh,
-                  child: _posts.isEmpty && _todos.isEmpty
-                      ? const Center(child: CircularProgressIndicator())
-                      : AnimatedList(
-                          initialItemCount: _posts.length,
-                          itemBuilder: (context, index, animation) {
-                            return SlideTransition(
-                              position: animation.drive(Tween(
-                                begin: const Offset(1, 0),
-                                end: const Offset(0, 0),
-                              )),
-                              child: _buildPostCard(_posts[index]),
-                            );
-                          },
-                        ),
+                  child:
+                      _posts.isEmpty && _todos.isEmpty
+                          ? const Center(child: CircularProgressIndicator())
+                          : _buildPostsList(),
                 ),
-
                 // Todos Tab
                 RefreshIndicator(
                   onRefresh: _onRefresh,
-                  child: _posts.isEmpty && _todos.isEmpty
-                      ? const Center(child: CircularProgressIndicator())
-                      : _buildTodoList(),
+                  child:
+                      _posts.isEmpty && _todos.isEmpty
+                          ? const Center(child: CircularProgressIndicator())
+                          : _buildTodoList(),
                 ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildUserInfoCard() {
+    return Card(
+      margin: const EdgeInsets.all(16),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        children: [
+          _buildInfoSection('Personal Information', [
+            _buildInfoRow(Icons.person, 'Username', widget.user.username),
+            _buildInfoRow(Icons.cake, 'Birth Date', widget.user.birthDate),
+            _buildInfoRow(Icons.wc, 'Gender', widget.user.gender),
+            _buildInfoRow(Icons.height, 'Height', '${widget.user.height} cm'),
+            _buildInfoRow(
+              Icons.monitor_weight,
+              'Weight',
+              '${widget.user.weight} kg',
+            ),
+          ]),
+          const Divider(),
+          _buildInfoSection('Contact Details', [
+            _buildInfoRow(Icons.email, 'Email', widget.user.email),
+            _buildInfoRow(Icons.phone, 'Phone', widget.user.phone),
+            _buildInfoRow(
+              Icons.location_city,
+              'City',
+              widget.user.address.city,
+            ),
+            _buildInfoRow(Icons.map, 'State', widget.user.address.state),
+          ]),
+          const Divider(),
+          _buildInfoSection('Physical Characteristics', [
+            _buildInfoRow(
+              Icons.remove_red_eye,
+              'Eye Color',
+              widget.user.eyeColor,
+            ),
+            _buildInfoRow(Icons.face, 'Hair Color', widget.user.hairColor),
+            _buildInfoRow(Icons.waves, 'Hair Type', widget.user.hairType),
+            _buildInfoRow(
+              Icons.bloodtype,
+              'Blood Group',
+              widget.user.bloodGroup,
+            ),
+          ]),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoSection(String title, List<Widget> children) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Theme.of(context).colorScheme.secondary),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPostsList() {
+    return ListView.builder(
+      itemCount: _posts.length,
+      itemBuilder: (context, index) {
+        return AnimatedBuilder(
+          animation: ModalRoute.of(context)!.animation!,
+          builder: (context, child) {
+            return FadeTransition(
+              opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
+                CurvedAnimation(
+                  parent: ModalRoute.of(context)!.animation!,
+                  curve: Interval(index * 0.1, 1.0, curve: Curves.easeOut),
+                ),
+              ),
+              child: child,
+            );
+          },
+          child: _buildPostCard(_posts[index]),
+        );
+      },
     );
   }
 
@@ -248,28 +372,39 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               children: [
                 Text(
                   post['title'] ?? 'No Title',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   post['body'] ?? 'No Content',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                 ),
                 if (tags.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Wrap(
                     spacing: 6,
-                    children: tags.map((tag) => Chip(
-                      label: Text(tag),
-                      backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-                      labelStyle: TextStyle(
-                        color: Theme.of(context).colorScheme.onSecondaryContainer,
-                      ),
-                    )).toList(),
+                    children:
+                        tags
+                            .map(
+                              (tag) => Chip(
+                                label: Text(tag),
+                                backgroundColor:
+                                    Theme.of(
+                                      context,
+                                    ).colorScheme.secondaryContainer,
+                                labelStyle: TextStyle(
+                                  color:
+                                      Theme.of(
+                                        context,
+                                      ).colorScheme.onSecondaryContainer,
+                                ),
+                              ),
+                            )
+                            .toList(),
                   ),
                 ],
                 const Divider(height: 24),
@@ -298,7 +433,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             ),
           ),
         ),
-      )
+      ),
     );
   }
 
@@ -333,12 +468,14 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                   title: Text(
                     todo['todo'] ?? 'No Title',
                     style: TextStyle(
-                      decoration: todo['completed'] == true
-                          ? TextDecoration.lineThrough
-                          : null,
-                      color: todo['completed'] == true
-                          ? Colors.grey
-                          : Theme.of(context).textTheme.bodyLarge?.color,
+                      decoration:
+                          todo['completed'] == true
+                              ? TextDecoration.lineThrough
+                              : null,
+                      color:
+                          todo['completed'] == true
+                              ? Colors.grey
+                              : Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   trailing: IconButton(
@@ -462,7 +599,11 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   _SliverAppBarDelegate(this._tabBar);
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: _tabBar,
