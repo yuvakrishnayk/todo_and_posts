@@ -344,28 +344,13 @@ class _UserListScreenState extends State<UserListScreen>
       ),
     );
   }
-
   void _navigateToUserDetail(User user) async {
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => UserDetailScreen(user: user)),
     );
-    // Properly update the filtered users based on current search text
-    final currentState = context.read<UserBloc>().state;
-    if (currentState is UsersLoaded) {
-      setState(() {
-        final query = _searchController.text.toLowerCase();
-        if (query.isEmpty) {
-          filteredUsers = currentState.users;
-        } else {
-          filteredUsers = currentState.users.where((user) {
-            return user.firstName.toLowerCase().contains(query) ||
-                user.lastName.toLowerCase().contains(query) ||
-                user.email.toLowerCase().contains(query);
-          }).toList();
-        }
-      });
-    }
+    // Re-run the search filter
+    _filterUsers();
   }
 }
 
