@@ -1,6 +1,4 @@
-// screens/user_detail_screen.dart
 import 'package:assignment/screens/create_post_screen.dart';
-import 'package:assignment/screens/full_user_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/user_bloc.dart';
@@ -78,6 +76,16 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             headerSliverBuilder: (context, innerBoxIsScrolled) {
               return [
                 SliverAppBar(
+                  leading: IconButton(
+                    icon: Icon(
+                      Icons.arrow_back,
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.black,
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
                   expandedHeight: 300,
                   floating: false,
                   pinned: true,
@@ -152,10 +160,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     IconButton(
                       icon: const Icon(Icons.add, color: Colors.white),
                       onPressed: () => _navigateToCreatePost(context),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.info, color: Colors.white),
-                      onPressed: () => _navigateToUserDetails(context),
                     ),
                   ],
                 ),
@@ -360,7 +364,8 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           decoration: BoxDecoration(
             border: Border(
               left: BorderSide(
-                color: Theme.of(context).colorScheme.primary,
+                // Changed from primary to a unique teal color
+                color: Color(0xFF00B4D8),
                 width: 4,
               ),
             ),
@@ -416,13 +421,15 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                         _buildReactionButton(
                           Icons.thumb_up,
                           reactions['likes'] ?? 0,
-                          Theme.of(context).colorScheme.primary,
+                          // Changed from primary to a unique purple color
+                          const Color(0xFF7209B7),
                         ),
                         const SizedBox(width: 16),
                         _buildReactionButton(
                           Icons.thumb_down,
                           reactions['dislikes'] ?? 0,
-                          Theme.of(context).colorScheme.error,
+                          // Changed from error to a unique orange color
+                          const Color(0xFFFF6B35),
                         ),
                       ],
                     ),
@@ -433,15 +440,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  void _navigateToUserDetails(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => FullUserDetailScreen(user: widget.user),
       ),
     );
   }

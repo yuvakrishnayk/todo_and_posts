@@ -220,15 +220,15 @@ class _UserListScreenState extends State<UserListScreen>
                   'User Directory',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color:
-                        Theme.of(
-                          context,
-                        ).colorScheme.onSurface, // Dynamic text color
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.brightness_6, color: Colors.black87),
+                icon: Icon(
+                  Icons.brightness_6,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
                 onPressed: widget.onToggleTheme,
                 tooltip: 'Toggle Theme',
               ),
@@ -242,21 +242,21 @@ class _UserListScreenState extends State<UserListScreen>
               child: TextField(
                 controller: _searchController,
                 style: TextStyle(
-                  color:
-                      Theme.of(
-                        context,
-                      ).colorScheme.onSurface, // Dynamic text color
-                ), // Light theme text color
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Theme.of(context).colorScheme.surface,
                   hintText: 'Search users...',
                   hintStyle: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(
-                      0.6,
-                    ), // Dynamic hint text color
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
                   ),
-                  prefixIcon: const Icon(Icons.search, color: Colors.black54),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
                     borderSide: BorderSide.none,
