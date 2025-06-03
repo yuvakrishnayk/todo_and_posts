@@ -1,9 +1,12 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/user_bloc.dart';
+import '../bloc/user_event.dart';
+import '../bloc/user_state.dart';
 import '../models/user.dart';
 import '../widgets/orbital_user_avatar.dart';
-import '../screens/user_detail_screen.dart'; // Add this import
-import '../services/api_service.dart';
+import '../screens/user_detail_screen.dart';
 
 class UserListScreen extends StatefulWidget {
   final VoidCallback onToggleTheme;
@@ -16,16 +19,11 @@ class UserListScreen extends StatefulWidget {
 
 class _UserListScreenState extends State<UserListScreen>
     with SingleTickerProviderStateMixin {
-  final _apiService = ApiService();
   late AnimationController _controller;
-  List<User> users = [];
   List<User> filteredUsers = [];
-  bool isLoading = true;
-  String error = '';
   final TextEditingController _searchController = TextEditingController();
   late ScrollController _scrollController;
   int _currentPage = 1;
-  bool _isFetchingMore = false;
 
   @override
   void initState() {
@@ -35,7 +33,6 @@ class _UserListScreenState extends State<UserListScreen>
       duration: const Duration(seconds: 30),
     )..repeat();
     _scrollController = ScrollController()..addListener(_onScroll);
-    _loadUsers();
     _searchController.addListener(_filterUsers);
   }
 
@@ -47,54 +44,35 @@ class _UserListScreenState extends State<UserListScreen>
     super.dispose();
   }
 
-  Future<void> _loadUsers({bool loadMore = false}) async {
-    if (loadMore) {
-      setState(() {
-        _isFetchingMore = true;
-      });
-    }
-    try {
-      final newUsers = await _apiService.getUsers(_currentPage);
-      setState(() {
-        users = loadMore ? [...users, ...newUsers] : newUsers;
-        filteredUsers = users;
-        isLoading = false;
-        _isFetchingMore = false;
-        _currentPage++;
-      });
-    } catch (e) {
-      setState(() {
-        error = 'Failed to load users';
-        isLoading = false;
-        _isFetchingMore = false;
-      });
-    }
-  }
-
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent && !_isFetchingMore) {
-      _loadUsers(loadMore: true);
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent) {
+      // Load more users when reaching the end
+      context.read<UserBloc>().add(LoadUsers());
     }
   }
 
   void _filterUsers() {
     final query = _searchController.text.toLowerCase();
-    setState(() {
-      filteredUsers =
-          users.where((user) {
-            return user.firstName.toLowerCase().contains(query) ||
-                user.lastName.toLowerCase().contains(query) ||
-                user.email.toLowerCase().contains(query);
-          }).toList();
-    });
+
+    final currentState = context.read<UserBloc>().state;
+    if (currentState is UsersLoaded) {
+      setState(() {
+        filteredUsers =
+            currentState.users.where((user) {
+              return user.firstName.toLowerCase().contains(query) ||
+                  user.lastName.toLowerCase().contains(query) ||
+                  user.email.toLowerCase().contains(query);
+            }).toList();
+      });
+    }
   }
 
   Future<void> _refreshUsers() async {
-    setState(() {
-      _currentPage = 1;
-      isLoading = true;
-    });
-    await _loadUsers();
+    context.read<UserBloc>().add(RefreshUsers());
+    return Future.delayed(
+      const Duration(milliseconds: 300),
+    ); // Give time for state to update
   }
 
   @override
@@ -120,7 +98,68 @@ class _UserListScreenState extends State<UserListScreen>
               _buildAppBar(context),
 
               // Main content
-              Expanded(child: _buildUserList()),
+              Expanded(
+                child: BlocConsumer<UserBloc, UserState>(
+                  listener: (context, state) {
+                    if (state is UsersLoaded) {
+                      setState(() {
+                        filteredUsers =
+                            _searchController.text.isEmpty
+                                ? state.users
+                                : state.users.where((user) {
+                                  final query =
+                                      _searchController.text.toLowerCase();
+                                  return user.firstName.toLowerCase().contains(
+                                        query,
+                                      ) ||
+                                      user.lastName.toLowerCase().contains(
+                                        query,
+                                      ) ||
+                                      user.email.toLowerCase().contains(query);
+                                }).toList();
+                      });
+                    }
+                  },
+                  builder: (context, state) {
+                    if (state is UserInitial) {
+                      // Trigger loading on initial state
+                      context.read<UserBloc>().add(LoadUsers());
+                    }
+
+                    if (state is UserLoading && filteredUsers.isEmpty) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (state is UserError) {
+                      return Center(
+                        child: Text(
+                          state.message,
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyLarge?.copyWith(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      );
+                    }
+
+                    if (filteredUsers.isEmpty && state is! UserLoading) {
+                      return Center(
+                        child: Text(
+                          'No users found',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyLarge?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      );
+                    }
+
+                    return _buildUserList(state is UserLoading);
+                  },
+                ),
+              ),
             ],
           ),
         ],
@@ -208,47 +247,26 @@ class _UserListScreenState extends State<UserListScreen>
     );
   }
 
-  Widget _buildUserList() {
-    if (isLoading && filteredUsers.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (error.isNotEmpty) {
-      return Center(
-        child: Text(
-          error,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Theme.of(context).colorScheme.error,
-          ),
-        ),
-      );
-    }
-
-    if (filteredUsers.isEmpty) {
-      return Center(
-        child: Text(
-          'No users found',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-      );
-    }
-
+  Widget _buildUserList(bool isLoadingMore) {
     return RefreshIndicator(
       onRefresh: _refreshUsers,
       child: ListView.builder(
         controller: _scrollController,
         padding: const EdgeInsets.all(16),
-        itemCount: filteredUsers.length + (_isFetchingMore ? 1 : 0),
+        itemCount: filteredUsers.length + (isLoadingMore ? 1 : 0),
         itemBuilder: (context, index) {
           if (index == filteredUsers.length) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: CircularProgressIndicator(),
+              ),
+            );
           }
           final user = filteredUsers[index];
           return _buildUserCard(user, index);
         },
-      )
+      ),
     );
   }
 
