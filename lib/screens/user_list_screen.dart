@@ -1,11 +1,11 @@
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/user_bloc.dart';
 import '../bloc/user_event.dart';
 import '../bloc/user_state.dart';
 import '../models/user.dart';
-import '../widgets/orbital_user_avatar.dart';
 import '../screens/user_detail_screen.dart';
 
 class UserListScreen extends StatefulWidget {
@@ -54,16 +54,18 @@ class _UserListScreenState extends State<UserListScreen>
 
   void _filterUsers() {
     final query = _searchController.text.toLowerCase();
-
     final currentState = context.read<UserBloc>().state;
     if (currentState is UsersLoaded) {
       setState(() {
-        filteredUsers =
-            currentState.users.where((user) {
-              return user.firstName.toLowerCase().contains(query) ||
-                  user.lastName.toLowerCase().contains(query) ||
-                  user.email.toLowerCase().contains(query);
-            }).toList();
+        if (query.isEmpty) {
+          filteredUsers = currentState.users;
+        } else {
+          filteredUsers = currentState.users.where((user) {
+            return user.firstName.toLowerCase().contains(query) ||
+                user.lastName.toLowerCase().contains(query) ||
+                user.email.toLowerCase().contains(query);
+          }).toList();
+        }
       });
     }
   }
@@ -282,11 +284,13 @@ class _UserListScreenState extends State<UserListScreen>
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              // Orbital Avatar
-              OrbitalUserAvatar(
-                user: user,
-                animationValue: _controller.value + index * 0.1,
-                size: 60,
+              // Simple Circle Avatar
+              Hero(
+                tag: 'avatar-${user.id}',
+                child: CircleAvatar(
+                  radius: 30,
+                  backgroundImage: NetworkImage(user.image),
+                ),
               ),
               const SizedBox(width: 16),
 
@@ -341,11 +345,27 @@ class _UserListScreenState extends State<UserListScreen>
     );
   }
 
-  void _navigateToUserDetail(User user) {
-    Navigator.push(
+  void _navigateToUserDetail(User user) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => UserDetailScreen(user: user)),
     );
+    // Properly update the filtered users based on current search text
+    final currentState = context.read<UserBloc>().state;
+    if (currentState is UsersLoaded) {
+      setState(() {
+        final query = _searchController.text.toLowerCase();
+        if (query.isEmpty) {
+          filteredUsers = currentState.users;
+        } else {
+          filteredUsers = currentState.users.where((user) {
+            return user.firstName.toLowerCase().contains(query) ||
+                user.lastName.toLowerCase().contains(query) ||
+                user.email.toLowerCase().contains(query);
+          }).toList();
+        }
+      });
+    }
   }
 }
 
