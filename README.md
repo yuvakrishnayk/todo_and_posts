@@ -4,7 +4,7 @@ A modern Flutter application showcasing clean architecture, BLoC pattern, and AP
 
 ![Flutter Version](https://img.shields.io/badge/flutter->=3.0.0-blue.svg)
 ![Dart Version](https://img.shields.io/badge/dart->=3.0.0-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-purple.svg)
+
 
 ## 🌟 Features
 
