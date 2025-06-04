@@ -406,7 +406,8 @@ class _UserListScreenState extends State<UserListScreen>
       context,
       MaterialPageRoute(builder: (context) => UserDetailScreen(user: user)),
     );
-    // Re-run the search filter
+    // Re-run the search filter and refresh user list
+    context.read<UserBloc>().add(LoadUsers());
     _filterUsers();
   }
 }
