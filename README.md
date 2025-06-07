@@ -116,10 +116,6 @@ Using BLoC pattern for:
 - Post/Todo management
 - Error handling
 
-## 📱 Screenshots
-
-[Add your app screenshots here]
-
 ## 🛠️ Built With
 
 - [flutter_bloc](https://pub.dev/packages/flutter_bloc) - State Management
